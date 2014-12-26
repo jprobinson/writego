@@ -17,8 +17,7 @@ import (
 var host = "localhost:8080"
 
 func main() {
-
-	//  read from a file and make a request for each line
+	// grab the start time so we can time our operation
 	start := time.Now()
 
 	// open the file, log the error and panic if we have one
@@ -27,12 +26,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	avg :=	calcAverageWeight(input)
+	// do the work!
+	avg := calcAverageWeight(input)
 
 	log.Print("the average weight is ", avg)
 	log.Print("work complete in ", time.Since(start))
 }
 
+// calcAverageWeight read from an io.ReaderCloser containing Cats and make a request for each line
 func calcAverageWeight(file io.ReadCloser) float32 {
 	// set up our func to close the file as soon as it completes (just in case)
 	defer file.Close()
@@ -64,7 +65,7 @@ func calcAverageWeight(file io.ReadCloser) float32 {
 			totalWeight += weight
 		}
 
-		avg = float32(totalWeight)/float32(catCount)
+		avg = float32(totalWeight) / float32(catCount)
 
 		// alert the main thread we're done
 		done <- true
