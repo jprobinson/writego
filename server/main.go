@@ -12,6 +12,8 @@ type Cat struct {
 	Breed string `json:"breed"`
 }
 
+var badCatErr = "bad cat"
+
 func main() {
 	// catweight will parse the given cat JSON and return the cat's weight (length of name + breed)
 	http.HandleFunc("/catweight", weighCat)
@@ -33,7 +35,7 @@ func weighCat(w http.ResponseWriter, r *http.Request) {
 
 	// check for an error and respond appropriately
 	if err != nil {
-		http.Error(w, fmt.Sprint("bad request: ", err), 400)
+		http.Error(w, badCatErr, 400)
 		return
 	}
 

@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 )
@@ -12,21 +11,18 @@ import (
 func TestWeighCats(t *testing.T) {
 	tests := []struct {
 		given      string
-		wantWeight int64
+		wantWeight string
 		wantCode   int
-		wantErr    bool
 	}{
 		{
 			"",
-			0,
+			badCatErr + "\n",
 			400,
-			true,
 		},
 		{
 			`{"breed":"Maine Coon","name":"George"}`,
-			16,
+			"16",
 			200,
-			false,
 		},
 	}
 
@@ -50,18 +46,9 @@ func TestWeighCats(t *testing.T) {
 		}
 
 		// read the entire response body
-		gotBody, err := ioutil.ReadAll(w.Body)
+		got, err := ioutil.ReadAll(w.Body)
 		if err != nil {
 			t.Errorf("weighCats(_,%q) encountered unexpected error reading response: %s", test.given, err)
-			continue
-		}
-
-		// attempt to parse into our expected integer
-		got, err := strconv.ParseInt(string(gotBody), 10, 64)
-		if test.wantErr {
-			if err == nil {
-				t.Errorf("weighCats(_,%q) expected error but got none", test.given)
-			}
 			continue
 		}
 
@@ -70,8 +57,8 @@ func TestWeighCats(t *testing.T) {
 			continue
 		}
 
-		if got != test.wantWeight {
-			t.Errorf("weighCats(_,%q) expected a response of %d; got %d", test.given, test.wantWeight, got)
+		if string(got) != test.wantWeight {
+			t.Errorf("weighCats(_,%q) expected a response of %q; got %q", test.given, test.wantWeight, got)
 			continue
 		}
 
