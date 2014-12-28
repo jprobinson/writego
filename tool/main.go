@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-var host = "localhost:8080"
+var host = "http://localhost:8080"
 
 func main() {
 	// grab the start time so we can time our operation
@@ -25,6 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer input.Close()
 
 	// do the work!
 	avg := calcAverageWeight(input)
@@ -33,10 +34,10 @@ func main() {
 	log.Print("work complete in ", time.Since(start))
 }
 
+var procs = 10
+
 // calcAverageWeight read from an io.ReaderCloser containing Cats and make a request for each line
-func calcAverageWeight(file io.ReadCloser) float32 {
-	// set up our func to close the file as soon as it completes (just in case)
-	defer file.Close()
+func calcAverageWeight(file io.Reader) float32 {
 
 	// create a buffered channel to move data from the file to our goroutines
 	cats := make(chan []byte, 10000)
@@ -47,7 +48,7 @@ func calcAverageWeight(file io.ReadCloser) float32 {
 
 	// create a WaitGroup to help us keep track of our goroutines
 	var weighers sync.WaitGroup
-	for i := 0; i < 10; i++ {
+	for i := 0; i < procs; i++ {
 		// increment the waitgroup to register our new goroutine
 		weighers.Add(1)
 		// kick off a bounce checker in a goroutine!
@@ -88,9 +89,6 @@ func calcAverageWeight(file io.ReadCloser) float32 {
 		if err := s.Err(); err != nil {
 			log.Print("scanner error: ", err)
 		}
-
-		// close our input file at the end
-		file.Close()
 	}()
 
 	// wait for the goroutine pool to finish their work and return
@@ -121,7 +119,7 @@ func catWeigher(cats chan []byte, weights chan int64, wg *sync.WaitGroup) {
 
 func getWeight(host string, catBytes []byte) (int64, error) {
 	// post against our isbounce service with the line as the body
-	resp, err := http.Post(fmt.Sprintf("http://%s/catweight", host), "application/json", bytes.NewReader(catBytes))
+	resp, err := http.Post(fmt.Sprintf("%s/catweight", host), "application/json", bytes.NewReader(catBytes))
 	if err != nil {
 		return 0, err
 	}
